@@ -131,4 +131,6 @@ class Parameters:
         # Task
         label_task = hou.pwd().parm("task").menuLabels()
         index_task = label_task.index(task)
-        sets_task = hou.pwd().parm("task").set(index_task) 
+        sets_task = hou.pwd().parm("task").set(index_task)
+            
+            
