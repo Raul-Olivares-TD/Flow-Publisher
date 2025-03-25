@@ -1,5 +1,3 @@
-# import flipbookGenerator
-import hou # type: ignore
 import os
 import shotgun_api3
 
