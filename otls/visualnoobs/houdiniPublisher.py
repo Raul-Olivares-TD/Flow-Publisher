@@ -45,26 +45,26 @@ class Publisher:
                 
         # Settings of each node for export the assets
         export_setting = {
-            "fbx": {
+            ".fbx": {
                 "node": nodes_types["rop_fbx"],
                 "param": "sopoutput",
                 "extension": ".fbx",
             },
             
-            "abc": {
+            ".abc": {
                 "node": nodes_types["rop_alembic"],
                 "param": "filename",
                 "extension": ".abc",
             },
             
-            "vdb": {
+            ".vdb": {
                 "node": nodes_types["filecache::2.0"],
                 "param": "basename",
                 "param2": "basedir",
                 "extension": None
             },
             
-            "usd": {
+            ".usdnc": {
                 "node": nodes_types["usdexport"],
                 "param": "lopoutput",
                 "extension": ".usdnc",

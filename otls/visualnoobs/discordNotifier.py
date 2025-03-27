@@ -46,6 +46,18 @@ class DiscordConnections:
             f"review of the task `{task}` from the project `{project}`") 
         
         return message
+    
+    def notify_asset_message(self, file_name):
+        """Message and data get from houdini to creates the content of notify.
+        
+        :param asset_name: Name of the asset.
+        :param version: The version of the asset.
+        """
+        
+        message = (f"**{self.USER_ID}** uploaded a new asset version to "
+            f"review`{file_name}`") 
+        
+        return message        
         
         
 # COMO LLAMAR ESTE SCRIPT 

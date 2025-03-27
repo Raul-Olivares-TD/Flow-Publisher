@@ -64,13 +64,14 @@ class GoogleDrive:
         
         return folders[0]["id"]      
                 
-    def upload_assets(self, assets_folder, output_path, file_name):
+    def upload_assets(self, assets_folder_id, output_path, file_name):
         
-        out = f"{output_path}{file_name}"
+        # out = f"{output_path}{file_name}"
+        out = os.path.join(output_path, file_name)
         # Metadata like the name...
         file_metadata = {
-            "name": "test_v001.usdnc",
-            "parents": [assets_folder]
+            "name": file_name,
+            "parents": [assets_folder_id]
         }
         # Upload files
         media = MediaFileUpload(out, mimetype="application/octet-stream")

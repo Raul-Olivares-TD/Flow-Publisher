@@ -4,9 +4,9 @@ import shotgun_api3
 
 class Flow:
 	def __init__(self):
-		self.sg = shotgun_api3.Shotgun(os.environ["FLOW_URL"],
-									   script_name=os.environ["FLOW_SCRIPT"],
-									   api_key=os.environ["FLOW_KEY"])
+		self.sg = shotgun_api3.Shotgun("https://labpro.shotgrid.autodesk.com",
+									   script_name="tdlab",
+									   api_key="0Wqebldthin_dyeiogfkvqfqf")
 
 	def get_user_id(self):
 		"""Gets the ID of the user autenitcate at Flow.
@@ -14,7 +14,7 @@ class Flow:
 		:return: The user id
 		:rtype: int
   		"""
-		SG_USER = os.environ["FLOW_USER"] # Usa variables de entorno
+		SG_USER = "raultd379@outlook.es" # Usa variables de entorno
 		filters = [["email", "is", SG_USER]]
 		user_data = self.sg.find_one("HumanUser", filters, fields=["id"])
 		
@@ -102,6 +102,14 @@ class Flow:
 
 		return project
 
+	def asset_type(self):
+
+		r = self.sg.find("Asset", [], fields=["sg_asset_type"])
+
+		type_list = [type["sg_asset_type"] for type in r]
+		
+		return list(dict.fromkeys(type_list))
+
 
 class UploadToFlow(Flow):
 	def __init__(self):
@@ -142,7 +150,44 @@ class UploadToFlow(Flow):
                       	field_name="sg_uploaded_movie")
 
 
-# # MANERA DE LLAMAR LA SUBIDA DE FLIPBOOKS A FLOW
+	def check_asset_exists(self, project, asset_name):
+
+		p_id = self.project_data()[project]
+  
+		filters = ["project", "is", {"type": "Project", "id": p_id}],		
+  
+		r = self.sg.find("Asset", filters, fields=["code"])
+
+		l = [name["code"] for name in r]
+
+		if asset_name in l:
+			self.asset_version()
+
+		else:
+			self.create_asset()
+			self.asset_version()
+
+	def create_asset(self, project, file_name):
+  
+		p_id = self.project_data()[project]
+     
+		data = {
+			"project": {"type": "Project", "id": p_id},
+			"code": file_name,
+			"sg_asset_type": "Model",
+		}
+
+		r = self.sg.create("Asset",data, return_fields=["id"])
+
+		return r["id"]
+
+	def asset_version(self):
+		pass
+
+		
+		
+
+# MANERA DE LLAMAR LA SUBIDA DE FLIPBOOKS A FLOW
 # outputpath = "D:/EPF/flipbook/"
 # project_name = hou.pwd().parm("project").evalAsString()		
 # task_name = hou.pwd().parm("task").evalAsString()
@@ -150,4 +195,7 @@ class UploadToFlow(Flow):
 # basename = flipbookGenerator.WalkIntoDirs().version_increment_flipbook()
 
 # UploadToFlow().upload_flipbook(outputpath, project_name, task_name, description, basename)
+
+
+x = UploadToFlow().check_asset_exists()
 
