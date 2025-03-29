@@ -79,7 +79,7 @@ class Publisher:
             
             # If node no exists create it at the export_settings dict
             if node:
-                if self.type == "vdb":
+                if self.type == ".vdb":
                     vdb_name = f"{self.name}{self.build_version()}"
                     node.parm(type["param"]).set(vdb_name)
                     node.parm(type["param2"]).set(self.output_path)

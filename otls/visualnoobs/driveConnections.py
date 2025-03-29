@@ -42,6 +42,7 @@ class GoogleDrive:
         self.service = build("drive", "v3", credentials=self.creds)
 
     def folder_project_id(self, project):
+        """Gets the id of the project folder from Google Drive."""
         
         query = f"name='{project}'"
 
@@ -51,30 +52,42 @@ class GoogleDrive:
             .list(q=query, fields="nextPageToken, files(id, name)")
             .execute()
         )
-        self.items = results.get("files", [])[0]["id"]
+        items = results.get("files", [])[0]["id"]
                 
-        return self.items
-        
+        return items
 
     def folder_assets_id(self, parent_id, folder_name):
-
+        """Gets the id of the assets folder from Google Drive."""
+        
         query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and '{parent_id}' in parents"
         result = self.service.files().list(q=query, fields="files(id, name)").execute()
         folders = result.get("files", [])
         
         return folders[0]["id"]      
-                
-    def upload_assets(self, assets_folder_id, output_path, file_name):
+    
+    def create_folder(self, folder_name, assets_folder_id):        
+        """Creates a folder in Google Drive and returns its ID."""
         
-        # out = f"{output_path}{file_name}"
-        out = os.path.join(output_path, file_name)
-        # Metadata like the name...
         file_metadata = {
-            "name": file_name,
+            "name": folder_name,
+            "mimeType": "application/vnd.google-apps.folder",
             "parents": [assets_folder_id]
         }
-        # Upload files
-        media = MediaFileUpload(out, mimetype="application/octet-stream")
+        
+        folder = (
+            self.service.files()
+            .create(body=file_metadata, fields="id")
+            .execute()
+        )
+        
+        return folder["id"]
+    
+    def upload_file(self, file_path, parent_id):
+        """Upload a file to Google Drive within a specific folder."""
+
+        file_name = os.path.basename(file_path)
+        file_metadata = {"name": file_name, "parents": [parent_id]}
+        media = MediaFileUpload(file_path, resumable=True)
 
         file = (
             self.service.files()
@@ -82,10 +95,24 @@ class GoogleDrive:
             .execute()
         )
         
-        return file
+        return file.get("id")
+    
+    def upload_folder(self, folder_path, parent_id):
+        """Upload a folder and all its contents to Google Drive."""
+
+        folder_name = os.path.basename(folder_path)
+        folder_id = self.create_folder(folder_name, parent_id)
+
+        for file_name in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, file_name)
+            if os.path.isfile(file_path):  # Solo sube archivos (ignora subcarpetas)
+                self.upload_file(file_path, folder_id)
+
 
 # COMO LLAMAR A ESTE SCRIPT
 # g = GoogleDrive()  
 # project_id = g.folder_project_id("NPT")  
 # assets_folder = g.folder_assets_id(project_id, "assets")
+# up = g.upload_folder("D:/EPF/assets/test_v001", assets_folder)
 # g.upload_assets(assets_folder, output_path, file_name)        
+
