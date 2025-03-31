@@ -60,13 +60,3 @@ class DiscordConnections:
         return message        
         
         
-# COMO LLAMAR ESTE SCRIPT 
-# project = hou.pwd().parm("project").evalAsString()
-# task = hou.pwd().parm("task").evalAsString()
-
-# discord = DiscordConnections()
-
-# msg = discord.notify_message_houdini(project, task)
-
-# discord.flipbok_notifier(msg)
-

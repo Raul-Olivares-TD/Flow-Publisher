@@ -108,11 +108,3 @@ class GoogleDrive:
             if os.path.isfile(file_path):  # Solo sube archivos (ignora subcarpetas)
                 self.upload_file(file_path, folder_id)
 
-
-# COMO LLAMAR A ESTE SCRIPT
-# g = GoogleDrive()  
-# project_id = g.folder_project_id("NPT")  
-# assets_folder = g.folder_assets_id(project_id, "assets")
-# up = g.upload_folder("D:/EPF/assets/test_v001", assets_folder)
-# g.upload_assets(assets_folder, output_path, file_name)        
-

@@ -4,9 +4,9 @@ import shotgun_api3
 
 class Flow:
 	def __init__(self):
-		self.sg = shotgun_api3.Shotgun("https://labpro.shotgrid.autodesk.com",
-									   script_name="tdlab",
-									   api_key="0Wqebldthin_dyeiogfkvqfqf")
+		self.sg = shotgun_api3.Shotgun(os.environ["FLOW_URL"],
+									   script_name=os.environ["FLOW_SCRIPT"],
+									   api_key=os.environ["FLOW_KEY"])
 
 	def get_user_id(self):
 		"""Gets the ID of the user autenitcate at Flow.
@@ -14,7 +14,7 @@ class Flow:
 		:return: The user id
 		:rtype: int
   		"""
-		SG_USER = "raultd379@outlook.es" # Usa variables de entorno
+		SG_USER = os.environ["FLOW_USER"] # Usa variables de entorno
 		filters = [["email", "is", SG_USER]]
 		user_data = self.sg.find_one("HumanUser", filters, fields=["id"])
 		
@@ -110,6 +110,19 @@ class Flow:
 		
 		return list(dict.fromkeys(type_list))
 
+	def asset_id(self, asset_name, project_name):
+		
+		project_id = self.project_data()[project_name]
+		
+		filters = [
+			["project", "is", {"type": "Project", "id": project_id}],
+			["code", "is", asset_name]
+		]
+
+		r = self.sg.find("Asset", filters, fields=["id"])
+  
+		return r[0]["id"]
+
 
 class UploadToFlow(Flow):
 	def __init__(self):
@@ -149,31 +162,35 @@ class UploadToFlow(Flow):
 		self.sg.upload("Version", r["id"], movie, 
                       	field_name="sg_uploaded_movie")
 
+	def check_asset_exists(self, project_name, asset_name, version):
 
-	def check_asset_exists(self, project, asset_name):
-
-		p_id = self.project_data()[project]
+		p_id = self.project_data()[project_name]
   
-		filters = ["project", "is", {"type": "Project", "id": p_id}],		
+		filters = [
+      	["project", "is", {"type": "Project", "id": p_id}],
+       ]		
   
 		r = self.sg.find("Asset", filters, fields=["code"])
 
-		l = [name["code"] for name in r]
-
-		if asset_name in l:
-			self.asset_version()
+		assets_name = [name["code"] for name in r]
+    
+		asset_version = f"{asset_name}_v{version:03d}"
+        
+		if asset_name in assets_name:
+			asset_id = self.asset_id(asset_name, project_name)
+			self.up_asset_version(project_name, asset_id, asset_version)
 
 		else:
-			self.create_asset()
-			self.asset_version()
+			asset_id = self.create_asset(project_name, asset_name)
+			self.up_asset_version(project_name, asset_id, asset_version)
 
-	def create_asset(self, project, file_name):
+	def create_asset(self, project_name, asset_name):
   
-		p_id = self.project_data()[project]
+		p_id = self.project_data()[project_name]
      
 		data = {
 			"project": {"type": "Project", "id": p_id},
-			"code": file_name,
+			"code": asset_name,
 			"sg_asset_type": "Model",
 		}
 
@@ -181,21 +198,19 @@ class UploadToFlow(Flow):
 
 		return r["id"]
 
-	def asset_version(self):
-		pass
+	def up_asset_version(self, project_name, asset_id, asset_version):
+     
+		project_id = self.project_data()[project_name]
+		user_id = self.get_user_id()
+     
+		data = {
+			"project": {"type": "Project", "id": project_id},
+			"entity": {"type": "Asset", "id": asset_id},
+			"code": asset_version,
+			"sg_status_list": "rev",
+			"user": {"type": "HumanUser", "id": user_id}
+		}
 
-		
-		
-
-# MANERA DE LLAMAR LA SUBIDA DE FLIPBOOKS A FLOW
-# outputpath = "D:/EPF/flipbook/"
-# project_name = hou.pwd().parm("project").evalAsString()		
-# task_name = hou.pwd().parm("task").evalAsString()
-# description = hou.pwd().parm("desc").evalAsString()
-# basename = flipbookGenerator.WalkIntoDirs().version_increment_flipbook()
-
-# UploadToFlow().upload_flipbook(outputpath, project_name, task_name, description, basename)
-
-
-x = UploadToFlow().check_asset_exists()
-
+		# Creates the version of the mp4 first
+		r = self.sg.create("Version",data, return_fields=["id"])
+  		
