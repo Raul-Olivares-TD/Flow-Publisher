@@ -42,7 +42,12 @@ class GoogleDrive:
         self.service = build("drive", "v3", credentials=self.creds)
 
     def folder_project_id(self, project):
-        """Gets the id of the project folder from Google Drive."""
+        """Gets the id of the project folder from Google Drive.
+        
+        :param project: Project name.
+        :return: The id of the project folder.
+        :rtype: str
+        """
         
         query = f"name='{project}'"
 
@@ -53,20 +58,34 @@ class GoogleDrive:
             .execute()
         )
         items = results.get("files", [])[0]["id"]
-                
+        
+        # "127763ygaqshjvajsayfs651gv"        
         return items
 
     def folder_assets_id(self, parent_id, folder_name):
-        """Gets the id of the assets folder from Google Drive."""
+        """Gets the id of the assets folder from Google Drive.
+        
+        :param parent_id: The id from te parent folder.
+        :param folder_name: The name of the folder to save the files.
+        :return: The id of the project folder.
+        :rtype: str
+        """
         
         query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder' and '{parent_id}' in parents"
         result = self.service.files().list(q=query, fields="files(id, name)").execute()
         folders = result.get("files", [])
         
+        # "127763ygaqshjvajsayfs651gv"     
         return folders[0]["id"]      
     
     def create_folder(self, folder_name, assets_folder_id):        
-        """Creates a folder in Google Drive and returns its ID."""
+        """Creates a folder in Google Drive and returns its ID.
+        
+        :param folder_name: Name of the folder to create.
+        :param assets_folder_id: Id of the parent folder.
+        :return: The id of the new folder.
+        :rtype: str
+        """
         
         file_metadata = {
             "name": folder_name,
@@ -80,10 +99,17 @@ class GoogleDrive:
             .execute()
         )
         
+        # "127763ygaqshjvajsayfs651gv"
         return folder["id"]
     
     def upload_file(self, file_path, parent_id):
-        """Upload a file to Google Drive within a specific folder."""
+        """Upload a file to Google Drive within a specific folder.
+        
+        :param file_path: Path where the file are.
+        :param parent_id: Id of the parent folder.
+        :return: The id of the file.
+        :rtype: str
+        """
 
         file_name = os.path.basename(file_path)
         file_metadata = {"name": file_name, "parents": [parent_id]}
@@ -95,10 +121,17 @@ class GoogleDrive:
             .execute()
         )
         
+        # "127763ygaqshjvajsayfs651gv"
         return file.get("id")
     
     def upload_folder(self, folder_path, parent_id):
-        """Upload a folder and all its contents to Google Drive."""
+        """Upload a folder and all its contents to Google Drive.
+        
+        :param folder_path: Path where the folder are.
+        :param parent_id: Id of the parent folder.
+        :return: The id of the folder.
+        :rtype: str
+        """
 
         folder_name = os.path.basename(folder_path)
         folder_id = self.create_folder(folder_name, parent_id)
@@ -108,3 +141,25 @@ class GoogleDrive:
             if os.path.isfile(file_path):  # Solo sube archivos (ignora subcarpetas)
                 self.upload_file(file_path, folder_id)
 
+        # "127763ygaqshjvajsayfs651gv"
+        return folder_id
+
+    def share_link(self, file_id):
+        """Create the link to share and get public permisions at the file.
+        
+        :param file_id: File id to create the link.
+        :return: The link from the file to share.
+        :rtype: str
+        """
+        
+        # Grant permissions so anyone with the link can view the file
+        self.service.permissions().create(
+            fileId=file_id,
+            body={"role": "reader", "type": "anyone"},
+        ).execute()
+
+        # Generate public link
+        link = f"https://drive.google.com/file/d/{file_id}/view"
+        
+        return link
+     

@@ -21,7 +21,7 @@ class Publisher:
         # Three digit numbers
         final_version = f"_v{self.version:03d}"
         
-        # _v123 | _v041 | _v002
+        # "_v123" | "_v041" | "_v002"
         return final_version
     
     def export_assets(self):

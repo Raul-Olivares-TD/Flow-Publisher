@@ -11,13 +11,14 @@ class Flow:
 	def get_user_id(self):
 		"""Gets the ID of the user autenitcate at Flow.
   
-		:return: The user id
+		:return: The user id.
 		:rtype: int
   		"""
-		SG_USER = os.environ["FLOW_USER"] # Usa variables de entorno
+		SG_USER = os.environ["FLOW_USER"] 
 		filters = [["email", "is", SG_USER]]
 		user_data = self.sg.find_one("HumanUser", filters, fields=["id"])
 		
+		# 88
 		return user_data["id"]                             
 
 	def projects(self):
@@ -29,9 +30,10 @@ class Flow:
   
 		filters = [["id", "is", self.get_user_id()]]
 		fields = ["projects"]
-		user_data = self.sg.find_one("HumanUser", filters, fields=fields)
+		user_projects = self.sg.find_one("HumanUser", filters, fields=fields)
 		
-		return user_data["projects"]
+		# [{"name": "EPF", "id": 123, "type": "Project"}]...
+		return user_projects["projects"]
 
 	def tasks(self):
 		"""Get the tasks on the user is assigned to.
@@ -50,6 +52,7 @@ class Flow:
 			fields = ["content", "entity", "project"]
 			tasks += self.sg.find("Task", filters, fields)
 			
+		# [{"name": "fxDesintegracion", "id": 1292, "Shot": "LT_0010", "Project": "EPF"}]
 		return tasks
 
 	def shots(self):
@@ -62,6 +65,7 @@ class Flow:
 		# Gets the id, name, type of the shots
 		shots = [shot["entity"] for shot in self.tasks()]
 
+		# ["LT_0010", "DF_0010", "DF_0020"]...
 		return shots
 
 	def sequences(self):
@@ -75,6 +79,7 @@ class Flow:
 		sequence = [sequence["entity"]["name"].split("_")[0]
 				    for sequence in self.tasks()]
   		
+		# ["LT", "DF", "MFR", "SE"]...
 		return sequence
 
 	def tasks_data(self):
@@ -87,6 +92,7 @@ class Flow:
 		# The task name like key and the id like value
 		task = {task["content"] : task["id"] for task in self.tasks()}
 
+		# {"fxFire": 1245, "fxDestruction": 1453}...
 		return task
 
 	def project_data(self):
@@ -100,18 +106,32 @@ class Flow:
 		project = {project["name"] : project["id"] 
              	   for project in self.projects()}
 
+		# {"EPF": 123, "NPT": 124}...
 		return project
 
 	def asset_type(self):
+		"""Gets the types of the assets assign at the project.
 
+		:return: A list with the type of assets like ["Model", "Camera"].
+		:rtype: list
+  		"""
+    
 		r = self.sg.find("Asset", [], fields=["sg_asset_type"])
 
 		type_list = [type["sg_asset_type"] for type in r]
 		
+		# ["Model", "Environment", "Camera"]...
 		return list(dict.fromkeys(type_list))
 
 	def asset_id(self, asset_name, project_name):
-		
+		"""Get the id of the asset at the project.
+
+		:param asset_name: Name of the asset to search for.
+		:param project_name: Name of the project in which the asset is located.
+		:return: The asset id.
+		:rtype: int
+  		"""		
+    
 		project_id = self.project_data()[project_name]
 		
 		filters = [
@@ -121,6 +141,7 @@ class Flow:
 
 		r = self.sg.find("Asset", filters, fields=["id"])
   
+		# 123...
 		return r[0]["id"]
 
 
@@ -162,8 +183,16 @@ class UploadToFlow(Flow):
 		self.sg.upload("Version", r["id"], movie, 
                       	field_name="sg_uploaded_movie")
 
-	def check_asset_exists(self, project_name, asset_name, version):
-
+	def check_asset_exists(self, project_name, asset_name, version,  asset_link):
+		"""Check if the asset exist at Flow for create it if not exist or upload
+  		a version directly if the asset exists.	
+    
+		:param project_name: Name of the project.
+		:param asset_name: Name of the asset.
+		:param version: Number of the asset version.
+		:param asset_link: The link with the file are saved.
+     	"""
+      
 		p_id = self.project_data()[project_name]
   
 		filters = [
@@ -178,14 +207,21 @@ class UploadToFlow(Flow):
         
 		if asset_name in assets_name:
 			asset_id = self.asset_id(asset_name, project_name)
-			self.up_asset_version(project_name, asset_id, asset_version)
+			self.up_asset_version(project_name, asset_id, asset_version, asset_link)
 
 		else:
 			asset_id = self.create_asset(project_name, asset_name)
-			self.up_asset_version(project_name, asset_id, asset_version)
+			self.up_asset_version(project_name, asset_id, asset_version, asset_link)
 
 	def create_asset(self, project_name, asset_name):
+		"""Create an asset in the Asset Entity Type of Flow.
   
+		:param project_name: Name of the project.
+		:param asset_name: Name of the asset.
+		:return: The asset id.
+		:rtype: int
+  		"""
+		
 		p_id = self.project_data()[project_name]
      
 		data = {
@@ -196,9 +232,18 @@ class UploadToFlow(Flow):
 
 		r = self.sg.create("Asset",data, return_fields=["id"])
 
+		# 89
 		return r["id"]
 
-	def up_asset_version(self, project_name, asset_id, asset_version):
+	def up_asset_version(self, project_name, asset_id, asset_version, 
+                      	 asset_link):
+		"""Upload a version of the asset to Flow.
+
+		:param project_name: Name of the project.
+		:param asset_id: Asset id for upload the version.
+		:param asset_version: Asset name+version.
+		:param asset_link: Link where the asset is saved.
+  		"""
      
 		project_id = self.project_data()[project_name]
 		user_id = self.get_user_id()
@@ -208,9 +253,9 @@ class UploadToFlow(Flow):
 			"entity": {"type": "Asset", "id": asset_id},
 			"code": asset_version,
 			"sg_status_list": "rev",
+			"sg_path_to_geometry": asset_link,
 			"user": {"type": "HumanUser", "id": user_id}
 		}
 
-		# Creates the version of the mp4 first
-		r = self.sg.create("Version",data, return_fields=["id"])
+		self.sg.create("Version",data, return_fields=["id"])
   		
