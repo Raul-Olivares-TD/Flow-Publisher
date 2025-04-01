@@ -183,7 +183,8 @@ class UploadToFlow(Flow):
 		self.sg.upload("Version", r["id"], movie, 
                       	field_name="sg_uploaded_movie")
 
-	def check_asset_exists(self, project_name, asset_name, version,  asset_link):
+	def check_asset_exists(self, project_name, asset_name, version, 
+                           asset_link):
 		"""Check if the asset exist at Flow for create it if not exist or upload
   		a version directly if the asset exists.	
     
@@ -207,11 +208,13 @@ class UploadToFlow(Flow):
         
 		if asset_name in assets_name:
 			asset_id = self.asset_id(asset_name, project_name)
-			self.up_asset_version(project_name, asset_id, asset_version, asset_link)
+			self.up_asset_version(project_name, asset_id, asset_version, 
+                         		  asset_link)
 
 		else:
 			asset_id = self.create_asset(project_name, asset_name)
-			self.up_asset_version(project_name, asset_id, asset_version, asset_link)
+			self.up_asset_version(project_name, asset_id, asset_version, 
+                                  asset_link)
 
 	def create_asset(self, project_name, asset_name):
 		"""Create an asset in the Asset Entity Type of Flow.
