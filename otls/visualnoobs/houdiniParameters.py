@@ -106,31 +106,35 @@ class Parameters:
         ​​of the scene you are working on.
         """
         
-        basename = hou.hipFile.basename()
-        basename_split = basename.split("_")
-        project = basename_split[0]
-        seq = basename_split[1]
-        shot = basename_split[2]+"_"+basename_split[3]
-        task = basename_split[4]
+        try:
+            basename = hou.hipFile.basename()
+            basename_split = basename.split("_")
+            project = basename_split[0]
+            seq = basename_split[1]
+            shot = basename_split[2]+"_"+basename_split[3]
+            task = basename_split[4]
 
-        # Project
-        label_project = hou.pwd().parm("project").menuLabels()
-        index_project = label_project.index(project)
-        sets_project = hou.pwd().parm("project").set(index_project)
+            # Project
+            label_project = hou.pwd().parm("project").menuLabels()
+            index_project = label_project.index(project)
+            sets_project = hou.pwd().parm("project").set(index_project)
 
-        # Seq
-        label_seq = hou.pwd().parm("seq").menuLabels()
-        index_seq = label_seq.index(seq)
-        sets_seq = hou.pwd().parm("seq").set(index_seq)
+            # Seq
+            label_seq = hou.pwd().parm("seq").menuLabels()
+            index_seq = label_seq.index(seq)
+            sets_seq = hou.pwd().parm("seq").set(index_seq)
 
-        # Shot
-        label_shot = hou.pwd().parm("shot").menuLabels()
-        index_shot = label_shot.index(shot)
-        sets_shot = hou.pwd().parm("shot").set(index_shot)    
+            # Shot
+            label_shot = hou.pwd().parm("shot").menuLabels()
+            index_shot = label_shot.index(shot)
+            sets_shot = hou.pwd().parm("shot").set(index_shot)    
 
-        # Task
-        label_task = hou.pwd().parm("task").menuLabels()
-        index_task = label_task.index(task)
-        sets_task = hou.pwd().parm("task").set(index_task)
+            # Task
+            label_task = hou.pwd().parm("task").menuLabels()
+            index_task = label_task.index(task)
+            sets_task = hou.pwd().parm("task").set(index_task) 
+
+        except Exception as e:
+            hou.ui.displayMessage(f"An error ocurred: {e}")
             
             
