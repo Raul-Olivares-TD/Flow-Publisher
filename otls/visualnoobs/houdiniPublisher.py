@@ -64,10 +64,10 @@ class Publisher:
                 "extension": None
             },
             
-            ".usdnc": {
+            ".usd": {
                 "node": nodes_types["usdexport"],
                 "param": "lopoutput",
-                "extension": ".usdnc",
+                "extension": ".usd",
             },
             
         }        
